@@ -1,0 +1,217 @@
+local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/MaxGatHub/WechugeHub/main/Loader"))() -- cal the lib
+local a = library:CreateWindow("Rumble Quest") -- Change to anything
+local b = a:CreateFolder("Main")
+local c = a:CreateFolder("Player")
+local e = a:CreateFolder("Visual")
+local f = a:CreateFolder("Credits")
+
+local CoreGui = game:GetService("StarterGui")
+
+local client = game.Players.LocalPlayer
+local char = client.Character
+
+local noclip = false
+local infjumpenabled = false
+
+game:GetService("RunService").RenderStepped:Connect(function()
+    if noclip == true then
+        game.Players.LocalPlayer.Character.Humanoid:ChangeState(11)
+    end
+end)
+
+game:GetService("UserInputService").JumpRequest:Connect(function()
+	if infjumpenabled then
+		game:GetService("Players").LocalPlayer.Character.Humanoid:ChangeState("Jumping")
+	end
+end)
+
+--Main
+
+b:Toggle("Kill Aura",function(Value)
+weapon = nil
+murder = Value
+directmurder = Value
+mouse = game.Players.LocalPlayer:GetMouse()
+
+function GetNearestNPCToMouse()
+    local PLAYERS      = {}
+    local PLAYER_HOLD  = {}
+    local DISTANCES    = {}
+    for i, v in pairs(game.Workspace.Enemies:GetChildren()) do
+        if v ~= game.Players.LocalPlayer then
+            table.insert(PLAYERS, v)
+        end
+    end
+    for i, v in pairs(PLAYERS) do
+        if v.HumanoidRootPart ~= nil then
+            local AIM = v:FindFirstChild("HumanoidRootPart")
+            if AIM ~= nil then
+                local DISTANCE = (v:FindFirstChild("HumanoidRootPart").Position - game.Workspace.CurrentCamera.CFrame.p).magnitude
+                local RAY = Ray.new(game.Workspace.CurrentCamera.CFrame.p, (mouse.Hit.p - game.Workspace.CurrentCamera.CFrame.p).unit * DISTANCE)
+                local HIT,POS = game.Workspace:FindPartOnRay(RAY, game.Workspace)
+                local DIFF = math.floor((POS - AIM.Position).magnitude)
+                PLAYER_HOLD[v.Name .. i] = {}
+                PLAYER_HOLD[v.Name .. i].dist= DISTANCE
+                PLAYER_HOLD[v.Name .. i].plr = v
+                PLAYER_HOLD[v.Name .. i].diff = DIFF
+                table.insert(DISTANCES, DIFF)
+            end
+        end
+    end
+   
+    if unpack(DISTANCES) == nil then
+        return nil
+    end
+   
+    local L_DISTANCE = math.floor(math.min(unpack(DISTANCES)))
+    if L_DISTANCE > 500 then
+        return nil
+    end
+   
+    for i, v in pairs(PLAYER_HOLD) do
+        if v.diff == L_DISTANCE then
+            return v.plr
+        end
+    end
+    return nil
+end
+
+
+for i,v in pairs(game.Players.LocalPlayer.Character:GetChildren()) do
+    if v:IsA("Model") and v:FindFirstChild("Handle") then
+        weapon = v
+    end
+end
+
+
+game:GetService('RunService').Stepped:connect(function()
+    if murder == true then
+        for i, v in pairs(game.Workspace.Enemies:GetChildren()) do
+            if v:FindFirstChild("Humanoid") then
+                game:GetService("ReplicatedStorage").Modules.Network.RemoteEvent:FireServer("WeaponDamage", ""..weapon.Name.."", v.Humanoid)
+            end
+        end
+    end
+    if murderdirect == true then
+        for i, v in pairs(game.Workspace.Enemies:GetChildren()) do
+            if v:FindFirstChild("Humanoid") then
+                local NPC = GetNearestNPCToMouse()
+                game:GetService("ReplicatedStorage").Modules.Network.RemoteEvent:FireServer("WeaponDamage", ""..weapon.Name.."", NPC.Humanoid)
+            end
+        end
+    end
+end)
+end)
+
+b:Toggle("Auto Farm",function(Value)
+getgenv().autofarm = Value
+
+coroutine.wrap(function()
+    while wait() do
+        if getgenv().autofarm == true then
+            pcall(function()
+                for i,v in pairs(game.Workspace.Enemies:GetDescendants()) do
+                        if v.Humanoid.Health > 0 and game.Players.LocalPlayer.Character.Humanoid.Health > 0 then
+                            repeat
+                                wait()
+                                game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = v.HumanoidRootPart.CFrame * CFrame.new(0,-8,0)
+                            until v.Humanoid.Health <= 0 or getgenv().autofarm == false
+                    end
+                end
+            end)
+        end
+    end
+end)()
+
+game:GetService("RunService").RenderStepped:Connect(function()
+    if autofarm == true then
+        game.Players.LocalPlayer.Character.Humanoid:ChangeState(11)
+    end
+end)
+end)
+
+--player
+c:Slider("WalkSpeed",0,250,30, function(Value)
+	game:GetService("Players").LocalPlayer.Character.Humanoid.WalkSpeed = Value
+end)
+
+c:Slider("Jump Power",0,250,30, function(Value)
+	game:GetService("Players").LocalPlayer.Character.Humanoid.JumpPower = Value
+end)
+
+c:Slider("Gravity",0,500,30, function(Value)
+    workspace.Gravity = Value
+end)
+
+c:Toggle("Noclip", function(Value)
+    noclip = Value
+end)
+
+c:Toggle("Infinite Jump", function(value)
+infjumpenabled = value
+end)
+
+c:Button("Reset", function()
+  game:GetService("Players").LocalPlayer.Character.Humanoid.Health = 0;
+end)
+
+
+--Visual
+
+e:Button("FPS Booster", function(value)
+local removedecals = false
+local g = game
+local w = g.Workspace
+local l = g.Lighting
+local t = w.Terrain
+t.WaterWaveSize = 0
+t.WaterWaveSpeed = 0
+t.WaterReflectance = 0
+t.WaterTransparency = 0
+l.GlobalShadows = false
+l.FogEnd = 9e9
+l.Brightness = 0
+settings().Rendering.QualityLevel = "Level01"
+for i, v in pairs(g:GetDescendants()) do
+    if v:IsA("Part") or v:IsA("Union") or v:IsA("CornerWedgePart") or v:IsA("TrussPart") then
+        v.Material = "Plastic"
+        v.Reflectance = 0
+    elseif v:IsA("Decal") or v:IsA("Texture") and removedecals then
+        v.Transparency = 1
+    elseif v:IsA("ParticleEmitter") or v:IsA("Trail") then
+        v.Lifetime = NumberRange.new(0)
+    elseif v:IsA("Explosion") then
+        v.BlastPressure = 1
+        v.BlastRadius = 1
+    elseif v:IsA("Fire") or v:IsA("SpotLight") or v:IsA("Smoke") or v:IsA("Sparkles") then
+        v.Enabled = false
+    elseif v:IsA("MeshPart") then
+        v.Material = "Plastic"
+        v.Reflectance = 0
+        v.TextureID = 10385902758728957
+    end
+end
+for i, e in pairs(l:GetChildren()) do
+    if e:IsA("BlurEffect") or e:IsA("SunRaysEffect") or e:IsA("ColorCorrectionEffect") or e:IsA("BloomEffect") or e:IsA("DepthOfFieldEffect") then
+        e.Enabled = false
+    end
+end
+end)
+
+e:Slider("FOV",0,120,30, function(Value)
+    
+local amount = fovamount
+
+game:GetService'Workspace'.Camera.FieldOfView = Value
+
+end)
+
+--Credits
+
+f:Button("Wechuge#3876",function()
+    setclipboard("Wechuge#3876")
+    CoreGui:SetCore("SendNotification", { Title = "Discord Name"; Text = "Copied To ClipBoard"; Duration = 3; })
+end)
+ 
+
+
